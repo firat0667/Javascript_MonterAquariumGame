@@ -48,6 +48,40 @@ window.addEventListener('load',function(){
             }
             this.collisionX +=this.speedX*this.speedModifier; // X ekseni pozisyonunu günceller
             this.collisionY +=this.speedY*this.speedModifier; // Y ekseni pozisyonunu günceller
+            // collison the obstacles
+            this.game.obstacles.forEach(obstacle=>{if(this.game.checkcollision(this,obstacle)){
+                console.log('collision');
+            };
+
+            })
+        }
+    }
+
+    class Obstacle{
+        constructor(game){
+            this.game=game;
+            this.collisionX=Math.random()*this.game.width;
+            this.collisionY=Math.random()*this.game.height;
+            this.colllisonRadius=60;
+            this.image=document.getElementById('obstacles');
+            this.spriteWidth=250;
+            this.spriteHeight=250;
+            this.width=this.spriteWidth;
+            this.height=this.spriteHeight;
+            this.spriteX=this.collisionX-this.width*0.5;
+            this.spriteY=this.collisionY-this.height*0.5-70;
+            this.frameX=Math.floor(Math.random()*4);
+            this.frameY=Math.floor(Math.random()*3);
+        }
+        draw(context){
+            context.drawImage(this.image,this.frameX*this.spriteWidth,0*this.spriteHeight,this.spriteWidth,this.spriteHeight,this.spriteX,this.spriteY,this.width,this.height);
+            context.beginPath(); // Yeni bir çizim yolu başlatır
+            context.arc(this.collisionX, this.collisionY , this.colllisonRadius ,0,Math.PI*2); // Yarıçapı 50 olan bir daire çizer
+            context.save(); // Çizim durumunu kaydeder
+            context.globalAlpha=.5; // Genel saydamlığı ayarlar
+            context.fill(); // Şekli doldurur
+            context.restore(); // Çizim durumunu geri yükler
+            context.stroke(); // Şekli çizer
         }
     }
 
@@ -56,7 +90,10 @@ window.addEventListener('load',function(){
             this.canvas=canvas; // Oyunun canvas nesnesine erişimi sağlar
             this.width=this.canvas.width; // Oyun genişliğini ayarlar
             this.height=this.canvas.height; // Oyun yüksekliğini ayarlar
+            this.topMargin=260;
             this.Player=new Player(this); // Oyuncu nesnesi oluşturur
+            this.numberOFobstacles=10;
+            this.obstacles=[];
 
             this.mouse={ // Fare koordinatları ve basılı olup olmadığını tutar
                 x:this.width*0.5, // X koordinatını ayarlar
@@ -83,9 +120,40 @@ window.addEventListener('load',function(){
         render(context){ // Oyunu çizer
             this.Player.draw(context); // Oyuncuyu çizer
             this.Player.update(); // Oyuncunun pozisyonunu günceller
+            this.obstacles.forEach(Obstacle=>Obstacle.draw(context));
+        }
+        checkcollision(a,b){
+            const dx = a.collisionX-b.collisionX;
+            const dy = a.collisionY-b.collisionY;
+            const distance=Math.hypot(dx,dy);
+            const sumOfRadii=a.colllisonRadius+b.colllisonRadius;
+            return(distance<sumOfRadii);
+        }
+        init(){
+           let attemps=0;
+           while(this.obstacles.length<this.numberOFobstacles&&attemps<500){
+            let testObstacle=new Obstacle(this);
+            let overlap=false;
+            this.obstacles.forEach(obstacle=>{const dx =testObstacle.collisionX-obstacle.collisionX;
+            const dy=testObstacle.collisionY-obstacle.collisionY
+            const distance=Math.hypot(dx,dy);
+            const distanceBuffer=100;
+            const sumofRadii=testObstacle.colllisonRadius+obstacle.colllisonRadius+distanceBuffer;
+            if(distance<sumofRadii){
+                overlap=true;
+            }
+        });
+        const margin=testObstacle.colllisonRadius*2;
+        if(!overlap && testObstacle.spriteX>0 && testObstacle.spriteX<this.width-testObstacle.width
+            && testObstacle.collisionY>this.topMargin+margin && testObstacle.collisionY<this.height-margin){
+            this.obstacles.push(testObstacle);
+        }
+            attemps++;
+           }
         }
     }
     const game=new Game(canvas); // Oyun nesnesi oluşturur
+    game.init();
     console.log(game); // Oyun nesnesini konsola yazar
 
     function animate(){ // Animasyon işlevi
