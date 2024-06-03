@@ -19,9 +19,18 @@ window.addEventListener('load',function(){
             this.dx=0; // Fare ile oyuncu arasındaki mesafeyi tutar (X)
             this.dy=0; // Fare ile oyuncu arasındaki mesafeyi tutar (Y)
             this.speedModifier=5; // Hızı ayarlar
+            this.spriteWidth=255;
+            this.spriteHeight=255;
+            this.width=this.spriteWidth;
+            this.height=this.spriteHeight;
+            this.spriteX;
+            this.spriteY;
+            this.image=document.getElementById('bull');
+            
 
         }
         draw(context){ // Oyuncuyu çizer
+            context.drawImage(this.image,0,0,this.spriteWidth,this.spriteHeight,this.spriteX ,this.spriteY,this.width,this.height);
             context.beginPath(); // Yeni bir çizim yolu başlatır
             context.arc(this.collisionX, this.collisionY , 50 ,0,Math.PI*2); // Yarıçapı 50 olan bir daire çizer
             context.save(); // Çizim durumunu kaydeder
@@ -48,30 +57,38 @@ window.addEventListener('load',function(){
             }
             this.collisionX +=this.speedX*this.speedModifier; // X ekseni pozisyonunu günceller
             this.collisionY +=this.speedY*this.speedModifier; // Y ekseni pozisyonunu günceller
-            // collison the obstacles
-            this.game.obstacles.forEach(obstacle=>{if(this.game.checkcollision(this,obstacle)){
-                console.log('collision');
-            };
-
+            this.spriteX=this.collisionX-this.width*0.5;
+            this.spriteY=this.collisionY-this.height*0.5-100;
+            this.game.obstacles.forEach(obstacle => {
+                let[collision,distance,sumOfRadii,dx,dy]=this.game.checkcollision(this,obstacle);
+                // let collision1 = game.checkcollision(this,obstacle)[0];
+                // let distance = game.checkcollision(this,obstacle)[1];
+                if(collision){
+                   const unit_x=dx/distance;
+                   const unit_y=dy/distance;
+                   this.collisionX=obstacle.collisionX+(sumOfRadii+1)*unit_x;
+                   this.collisionY=obstacle.collisionY+(sumOfRadii+1)*unit_y;
+                }
             })
         }
     }
-
+      // Engellerin sınıfı tanımlanır
     class Obstacle{
         constructor(game){
-            this.game=game;
-            this.collisionX=Math.random()*this.game.width;
-            this.collisionY=Math.random()*this.game.height;
-            this.colllisonRadius=60;
-            this.image=document.getElementById('obstacles');
-            this.spriteWidth=250;
-            this.spriteHeight=250;
-            this.width=this.spriteWidth;
-            this.height=this.spriteHeight;
-            this.spriteX=this.collisionX-this.width*0.5;
-            this.spriteY=this.collisionY-this.height*0.5-70;
-            this.frameX=Math.floor(Math.random()*4);
-            this.frameY=Math.floor(Math.random()*3);
+            this.game=game; // Oyun nesnesine erişim sağlar
+            this.collisionX=Math.random()*this.game.width; // Engelin x pozisyonunu rastgele belirler
+            this.collisionY=Math.random()*this.game.height; // Engelin y pozisyonunu rastgele belirler
+            this.colllisonRadius=60; // Çarpışma yarıçapını ayarlar
+            this.image=document.getElementById('obstacles'); // Engelin resmini belirler
+            this.spriteWidth=250; // Engelin genişliğini ayarlar
+            this.spriteHeight=250; // Engelin yüksekliğini ayarlar
+            this.width=this.spriteWidth; // Engelin genişliğini ayarlar
+            this.height=this.spriteHeight; // Engelin yüksekliğini ayarlar
+            this.spriteX=this.collisionX-this.width*0.5; // Engelin x pozisyonunu ayarlar
+            this.spriteY=this.collisionY-this.height*0.5-70; // Engelin y pozisyonunu ayarlar
+            this.frameX=Math.floor(Math.random()*4); // Engelin çerçeve x pozisyonunu rastgele belirler
+            this.frameY=Math.floor(Math.random()*3); // Engelin çerçeve y pozisyonunu rastgele belirler
+
         }
         draw(context){
             context.drawImage(this.image,this.frameX*this.spriteWidth,0*this.spriteHeight,this.spriteWidth,this.spriteHeight,this.spriteX,this.spriteY,this.width,this.height);
@@ -123,32 +140,33 @@ window.addEventListener('load',function(){
             this.obstacles.forEach(Obstacle=>Obstacle.draw(context));
         }
         checkcollision(a,b){
-            const dx = a.collisionX-b.collisionX;
-            const dy = a.collisionY-b.collisionY;
-            const distance=Math.hypot(dx,dy);
-            const sumOfRadii=a.colllisonRadius+b.colllisonRadius;
-            return(distance<sumOfRadii);
+            const dx = a.collisionX - b.collisionX; // X eksenindeki mesafeyi hesaplar
+            const dy = a.collisionY - b.collisionY; // Y eksenindeki mesafeyi hesaplar
+            const distance = Math.hypot(dx, dy); // İki nokta arasındaki uzaklığı hesaplar
+            const sumOfRadii = a.colllisonRadius + b.colllisonRadius; // İki çarpışma yarıçapının toplamını alır
+            return [(distance < sumOfRadii), distance, sumOfRadii, dx, dy]; // Çarpışma durumunu, mesafeyi, yarıçap toplamını ve mesafe vektörlerini döndürür
         }
         init(){
-           let attemps=0;
+           let attemps=0;  // Deneme sayısını izler
            while(this.obstacles.length<this.numberOFobstacles&&attemps<500){
-            let testObstacle=new Obstacle(this);
-            let overlap=false;
-            this.obstacles.forEach(obstacle=>{const dx =testObstacle.collisionX-obstacle.collisionX;
-            const dy=testObstacle.collisionY-obstacle.collisionY
-            const distance=Math.hypot(dx,dy);
-            const distanceBuffer=100;
-            const sumofRadii=testObstacle.colllisonRadius+obstacle.colllisonRadius+distanceBuffer;
-            if(distance<sumofRadii){
-                overlap=true;
+            let testObstacle=new Obstacle(this); // Yeni bir engel oluşturur
+            let overlap=false; // Çakışma kontrolü için bir bayrak
+             // Mevcut engellerle çakışmayı kontrol eder
+            this.obstacles.forEach(obstacle=>{const dx =testObstacle.collisionX-obstacle.collisionX; // X eksenindeki mesafeyi hesaplar
+            const dy=testObstacle.collisionY-obstacle.collisionY // Y eksenindeki mesafeyi hesaplar
+            const distance=Math.hypot(dx,dy); // İki nokta arasındaki uzaklığı hesaplar
+            const distanceBuffer=100; // Engeller arası minimum mesafe tamponu
+            const sumofRadii=testObstacle.colllisonRadius+obstacle.colllisonRadius+distanceBuffer; // İki çarpışma yarıçapının toplamını alır
+            if(distance<sumofRadii){ // Eğer çakışma varsa
+                overlap=true; // Çakışma bayrağını ayarlar
             }
         });
-        const margin=testObstacle.colllisonRadius*2;
+        const margin=testObstacle.colllisonRadius*2; // Engelin kenar boşluğunu hesaplar
         if(!overlap && testObstacle.spriteX>0 && testObstacle.spriteX<this.width-testObstacle.width
             && testObstacle.collisionY>this.topMargin+margin && testObstacle.collisionY<this.height-margin){
-            this.obstacles.push(testObstacle);
+            this.obstacles.push(testObstacle); // Engeli ekler
         }
-            attemps++;
+            attemps++; // Deneme sayısını artırır
            }
         }
     }
