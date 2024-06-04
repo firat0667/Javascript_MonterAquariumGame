@@ -26,10 +26,8 @@ window.addEventListener('load',function(){
             this.spriteX;
             this.spriteY;
             this.frameX=0;
-            this.frameY=0;
+            this.frameY=5;
             this.image=document.getElementById('bull');
-            
-
         }
         draw(context){ // Oyuncuyu çizer
             context.drawImage(this.image,0*this.spriteWidth,6*spi,this.spriteWidth,this.spriteHeight,this.spriteX ,this.spriteY,this.width,this.height);
