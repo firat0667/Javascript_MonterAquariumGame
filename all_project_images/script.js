@@ -25,12 +25,14 @@ window.addEventListener('load',function(){
             this.height=this.spriteHeight;
             this.spriteX;
             this.spriteY;
+            this.frameX=0;
+            this.frameY=0;
             this.image=document.getElementById('bull');
             
 
         }
         draw(context){ // Oyuncuyu çizer
-            context.drawImage(this.image,0,0,this.spriteWidth,this.spriteHeight,this.spriteX ,this.spriteY,this.width,this.height);
+            context.drawImage(this.image,0*this.spriteWidth,6*spi,this.spriteWidth,this.spriteHeight,this.spriteX ,this.spriteY,this.width,this.height);
             context.beginPath(); // Yeni bir çizim yolu başlatır
             context.arc(this.collisionX, this.collisionY , 50 ,0,Math.PI*2); // Yarıçapı 50 olan bir daire çizer
             context.save(); // Çizim durumunu kaydeder
