@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
                 this.game = game; // Oyuncunun oyun nesnesine erişimi sağlar
                 this.collisionX = this.game.width * 0.5; // Çarpışma X pozisyonunu ayarlar
                 this.collisionY = this.game.height * 0.5; // Çarpışma Y pozisyonunu ayarlar
-                this.collisionRadius = 50; // Çarpışma yarıçapını ayarlar
+                this.collisionRadius = 30; // Çarpışma yarıçapını ayarlar
                 this.speedX = 0; // X ekseni hızını ayarlar
                 this.speedY = 0; // Y ekseni hızını ayarlar
                 this.dx = 0; // Fare ile oyuncu arasındaki mesafeyi tutar (X)
@@ -32,17 +32,20 @@ if (typeof window !== 'undefined') {
             }
             draw(context) { // Oyuncuyu çizer
                 context.drawImage(this.image, this.frameX * this.spriteWidth, this.frameY * this.spriteHeight,this.spriteWidth,this.spriteHeight, this.spriteX, this.spriteY, this.width, this.height);
-                context.beginPath(); // Yeni bir çizim yolu başlatır
-                context.arc(this.collisionX, this.collisionY, 50, 0, Math.PI * 2); // Yarıçapı 50 olan bir daire çizer
-                context.save(); // Çizim durumunu kaydeder
-                context.globalAlpha = .5; // Genel saydamlığı ayarlar
-                context.fill(); // Şekli doldurur
-                context.restore(); // Çizim durumunu geri yükler
-                context.stroke(); // Şekli çizer
-                context.beginPath(); // Yeni bir çizim yolu başlatır
-                context.moveTo(this.collisionX, this.collisionY); // Başlangıç noktasını ayarlar
-                context.lineTo(this.game.mouse.x, this.game.mouse.y); // Bitiş noktasını ayarlar
-                context.stroke(); // Şekli çizer
+                if(this.game.debug){
+                    context.beginPath(); // Yeni bir çizim yolu başlatır
+                    context.arc(this.collisionX, this.collisionY, 50, 0, Math.PI * 2); // Yarıçapı 50 olan bir daire çizer
+                    context.save(); // Çizim durumunu kaydeder
+                    context.globalAlpha = .5; // Genel saydamlığı ayarlar
+                    context.fill(); // Şekli doldurur
+                    context.restore(); // Çizim durumunu geri yükler
+                    context.stroke(); // Şekli çizer
+                    context.beginPath(); // Yeni bir çizim yolu başlatır
+                    context.moveTo(this.collisionX, this.collisionY); // Başlangıç noktasını ayarlar
+                    context.lineTo(this.game.mouse.x, this.game.mouse.y); // Bitiş noktasını ayarlar
+                    context.stroke(); // Şekli çizer
+                }
+       
             }
             update() { // Oyuncunun pozisyonunu günceller
                 this.dx = this.game.mouse.x - this.collisionX; // Fare ile oyuncu arasındaki mesafeyi hesaplar (X)
@@ -57,7 +60,6 @@ if (typeof window !== 'undefined') {
                 else if(angle<2.74) this.frameY=5;
                 else if(angle<-2.74 || angle >2.74) this.frameY=6;
                 else if(angle<-1.96) this.frameY=7;
-                console.log(angle,this.frameY);
                 const distance = Math.hypot(this.dy, this.dx); // İki nokta arasındaki uzaklığı hesaplar
 
                 if (distance > this.speedModifier) { // Eğer mesafe belirtilen hızdan büyükse
@@ -71,6 +73,17 @@ if (typeof window !== 'undefined') {
                 this.collisionY += this.speedY * this.speedModifier; // Y ekseni pozisyonunu günceller
                 this.spriteX = this.collisionX - this.width * 0.5;
                 this.spriteY = this.collisionY - this.height * 0.5 - 100;
+
+               // Horizontal boundaries
+                if(this.collisionX<this.collisionRadius)
+                    this.collisionX=this.collisionRadius;
+                else if(this.collisionX>this.game.width-this.collisionRadius)
+                    this.collisionX=this.game.width-this.collisionRadius;
+              // Vertical Boundries
+               if(this.collisionY<this.game.topMargin+this.collisionRadius)
+                this.collisionY=this.game.topMargin+this.collisionRadius;
+              else if(this.collisionY>this.game.height-this.collisionRadius)this.collisionY=this.game.height-this.collisionRadius;
+
                 this.game.obstacles.forEach(obstacle => {
                     let [collision, distance, sumOfRadii, dx, dy] = this.game.checkCollision(this, obstacle);
                     if (collision) {
@@ -103,13 +116,17 @@ if (typeof window !== 'undefined') {
             }
             draw(context) {
                 context.drawImage(this.image, this.frameX * this.spriteWidth, 0 * this.spriteHeight, this.spriteWidth, this.spriteHeight, this.spriteX, this.spriteY, this.width, this.height);
-                context.beginPath(); // Yeni bir çizim yolu başlatır
-                context.arc(this.collisionX, this.collisionY, this.collisionRadius, 0, Math.PI * 2); // Yarıçapı 50 olan bir daire çizer
-                context.save(); // Çizim durumunu kaydeder
-                context.globalAlpha = .5; // Genel saydamlığı ayarlar
-                context.fill(); // Şekli doldurur
-                context.restore(); // Çizim durumunu geri yükler
-                context.stroke(); // Şekli çizer
+                if(this.game.debug)
+                    {
+                    context.beginPath(); // Yeni bir çizim yolu başlatır
+                    context.arc(this.collisionX, this.collisionY, this.collisionRadius, 0, Math.PI * 2); // Yarıçapı 50 olan bir daire çizer
+                    context.save(); // Çizim durumunu kaydeder
+                    context.globalAlpha = .5; // Genel saydamlığı ayarlar
+                    context.fill(); // Şekli doldurur
+                    context.restore(); // Çizim durumunu geri yükler
+                    context.stroke(); // Şekli çizer
+                }
+           
             }
         }
 
@@ -119,6 +136,7 @@ if (typeof window !== 'undefined') {
                 this.width = this.canvas.width; // Oyun genişliğini ayarlar
                 this.height = this.canvas.height; // Oyun yüksekliğini ayarlar
                 this.topMargin = 260;
+                this.debug=true;
                 this.Player = new Player(this); // Oyuncu nesnesi oluşturur
                 this.numberOfObstacles = 10;
                 this.obstacles = [];
@@ -143,6 +161,10 @@ if (typeof window !== 'undefined') {
                 canvas.addEventListener('mousemove', e => { // Fare hareket ettiğinde
                     this.mouse.x = e.offsetX; // Fare X pozisyonunu günceller
                     this.mouse.y = e.offsetY; // Fare Y pozisyonunu günceller
+                });
+                window.addEventListener('keydown',e=>{
+                    if(e.key=='d')this.debug=!this.debug;
+                    console.log(this.debug);
                 });
             }
             render(context) { // Oyunu çizer
