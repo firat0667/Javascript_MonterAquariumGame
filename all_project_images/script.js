@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
                 this.dy = 0; // Fare ile oyuncu arasındaki mesafeyi tutar (Y)
                 this.speedModifier = 5; // Hızı ayarlar
                 this.spriteWidth = 255;
-                this.spriteHeight = 255;
+                this.spriteHeight = 256;
                 this.width = this.spriteWidth;
                 this.height = this.spriteHeight;
                 this.spriteX;
@@ -130,6 +130,36 @@ if (typeof window !== 'undefined') {
             }
         }
 
+        class Egg{
+            constructor(game){
+                this.game=game;
+                this.collisionX=Math.random()*this.game.width;
+                this.collisionY=Math.random()*this.game.height;
+                this.collisionRadius=40;
+                this.image=document.getElementById('egg');
+                this.spriteWidth=110;
+                this.spriteHeight=135;
+                this.width=this.spriteWidth;
+                this.height=this.spriteHeight;
+                this.spriteX=this.collisionX+this.width*.5;
+                this.spriteY=this.collisionY+this.height*.5;
+            }
+            draw(context){
+                context.drawImage(this.image,this.spriteX,
+                    this.spriteY);
+                    if(this.game.debug)
+                        {
+                        context.beginPath(); // Yeni bir çizim yolu başlatır
+                        context.arc(this.collisionX, this.collisionY, this.collisionRadius, 0, Math.PI * 2); // Yarıçapı 50 olan bir daire çizer
+                        context.save(); // Çizim durumunu kaydeder
+                        context.globalAlpha = .5; // Genel saydamlığı ayarlar
+                        context.fill(); // Şekli doldurur
+                        context.restore(); // Çizim durumunu geri yükler
+                        context.stroke(); // Şekli çizer
+                    }
+            }
+        }
+
         class Game { // Oyun sınıfı tanımlanır
             constructor(canvas) {
                 this.canvas = canvas; // Oyunun canvas nesnesine erişimi sağlar
@@ -138,8 +168,13 @@ if (typeof window !== 'undefined') {
                 this.topMargin = 260;
                 this.debug=true;
                 this.Player = new Player(this); // Oyuncu nesnesi oluşturur
+                this.fps=60;
+                this.timer=0;
+                this.interval=1000/this.fps;
                 this.numberOfObstacles = 10;
+                this.maxEggs=10;
                 this.obstacles = [];
+                this.Egg = [];
 
                 this.mouse = { // Fare koordinatları ve basılı olup olmadığını tutar
                     x: this.width * 0.5, // X koordinatını ayarlar
@@ -167,10 +202,16 @@ if (typeof window !== 'undefined') {
                     console.log(this.debug);
                 });
             }
-            render(context) { // Oyunu çizer
-                this.Player.draw(context); // Oyuncuyu çizer
-                this.Player.update(); // Oyuncunun pozisyonunu günceller
-                this.obstacles.forEach(obstacle => obstacle.draw(context));
+            render(context,deltaTime) { // Oyunu çizer
+                if(this.timer>this.interval){
+                    // animate next frame
+                    context.clearRect(0,0,this.width,this.height)
+                    this.obstacles.forEach(obstacle => obstacle.draw(context));
+                    this.Player.draw(context); // Oyuncuyu çizer
+                    this.Player.update(); // Oyuncunun pozisyonunu günceller
+                    this.timer=0;
+                }
+                this.timer+=deltaTime;
             }
             checkCollision(a, b) {
                 const dx = a.collisionX - b.collisionX; // X eksenindeki mesafeyi hesaplar
@@ -208,12 +249,13 @@ if (typeof window !== 'undefined') {
         const game = new Game(canvas); // Oyun nesnesi oluşturur
         game.init();
         console.log(game); // Oyun nesnesini konsola yazar
-
-        function animate() { // Animasyon işlevi
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Canvas'i temizler
-            game.render(ctx); // Oyunu çizer
-            window.requestAnimationFrame(animate); // Animasyonu tekrar çağırır
+        let lastime=0;
+        function animate(timeStamp) { // Animasyon işlevi
+            const deltaTime=timeStamp-lastime;
+            lastime=timeStamp;
+            game.render(ctx,deltaTime); // Oyunu çizer
+            requestAnimationFrame(animate); // Animasyonu tekrar çağırır
         }
-        animate(); // Animasyonu başlatır
+        animate(0); // Animasyonu başlatır
     });
 }
